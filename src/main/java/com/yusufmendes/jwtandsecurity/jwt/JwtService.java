@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 @Component
@@ -19,27 +21,44 @@ public class JwtService {
 
     public String generateToken(UserDetails userDetails) {
 
-        //Map<String, String> claimsMap = new HashMap<>();
-        //claimsMap.put("role", "ADMIN");
-        //.setClaims(claimsMap)
+        Map<String, Object> claimsMap = new HashMap<>();
+        claimsMap.put("role", "ADMIN");
 
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
+                .addClaims(claimsMap)
                 .setIssuedAt(new Date()) //token oluşturulma zamanı
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 2)) //token bitme süresi
                 .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    //token çözme metodu
-    public <T> T exportToken(String token, Function<Claims, T> claimsTFunction) {
+    /*public static void main(String[] args) {
+        String token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ5dXN1Zm1lbmRlcyIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1NjMwNjY2MSwiZXhwIjoxNzU2MzEzODYxfQ.JbagI_uNIQZUlGfnPdsDIeSZgkGBdbfpSjKFXrX4FMU";
+        String key = "role";
+        Object value = getClaimsByKey(token, key);
+        System.out.println("value: " + value);
+    }*/
+
+    //claims içinden değer çekme
+    public Object getClaimsByKey(String token, String key) {
+        Claims claims = getClaims(token);
+        return claims.get(key);
+    }
+
+    public Claims getClaims(String token) {
         Claims claims = Jwts
                 .parserBuilder()
                 .setSigningKey(getKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+        return claims;
+    }
 
+    //token çözme metodu
+    public <T> T exportToken(String token, Function<Claims, T> claimsTFunction) {
+        Claims claims = getClaims(token);
         return claimsTFunction.apply(claims);
     }
 
