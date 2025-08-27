@@ -3,6 +3,7 @@ package com.yusufmendes.jwtandsecurity.controller.impl;
 import com.yusufmendes.jwtandsecurity.controller.IRestAuthController;
 import com.yusufmendes.jwtandsecurity.dto.DtoUser;
 import com.yusufmendes.jwtandsecurity.jwt.AuthRequest;
+import com.yusufmendes.jwtandsecurity.jwt.AuthResponse;
 import com.yusufmendes.jwtandsecurity.service.IAuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,5 +21,11 @@ public class RestAuthControllerImpl implements IRestAuthController {
     @Override
     public DtoUser register(@Valid @RequestBody AuthRequest authRequest) {
         return authService.register(authRequest);
+    }
+
+    @PostMapping("/authenticate")
+    @Override
+    public AuthResponse authenticate(@Valid @RequestBody AuthRequest authRequest) {
+        return authService.authenticate(authRequest);
     }
 }

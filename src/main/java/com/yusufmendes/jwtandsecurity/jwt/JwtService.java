@@ -10,8 +10,6 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
 
 @Component
@@ -21,12 +19,12 @@ public class JwtService {
 
     public String generateToken(UserDetails userDetails) {
 
-        Map<String, String> claimsMap = new HashMap<>();
-        claimsMap.put("role", "ADMIN");
+        //Map<String, String> claimsMap = new HashMap<>();
+        //claimsMap.put("role", "ADMIN");
+        //.setClaims(claimsMap)
 
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
-                .setClaims(claimsMap)
                 .setIssuedAt(new Date()) //token oluşturulma zamanı
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 2)) //token bitme süresi
                 .signWith(getKey(), SignatureAlgorithm.HS256)
@@ -39,7 +37,8 @@ public class JwtService {
                 .parserBuilder()
                 .setSigningKey(getKey())
                 .build()
-                .parseClaimsJwt(token).getBody();
+                .parseClaimsJws(token)
+                .getBody();
 
         return claimsTFunction.apply(claims);
     }
