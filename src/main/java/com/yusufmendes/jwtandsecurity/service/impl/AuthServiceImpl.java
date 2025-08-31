@@ -4,7 +4,9 @@ import com.yusufmendes.jwtandsecurity.dto.DtoUser;
 import com.yusufmendes.jwtandsecurity.jwt.AuthRequest;
 import com.yusufmendes.jwtandsecurity.jwt.AuthResponse;
 import com.yusufmendes.jwtandsecurity.jwt.JwtService;
+import com.yusufmendes.jwtandsecurity.model.RefreshToken;
 import com.yusufmendes.jwtandsecurity.model.User;
+import com.yusufmendes.jwtandsecurity.repository.RefreshTokenRepository;
 import com.yusufmendes.jwtandsecurity.repository.UserRepository;
 import com.yusufmendes.jwtandsecurity.service.IAuthService;
 import org.springframework.beans.BeanUtils;
@@ -14,7 +16,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class AuthServiceImpl implements IAuthService {
@@ -31,6 +35,21 @@ public class AuthServiceImpl implements IAuthService {
     @Autowired
     private JwtService jwtService;
 
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    private RefreshToken createRefreshToken(User user) {
+
+        RefreshToken refreshToken = new RefreshToken();
+        //rondom bir token oluşturuldu
+        refreshToken.setRefreshToken(UUID.randomUUID().toString());
+        //refres token oluşturulma süresi ayarlandı(4 saat)
+        refreshToken.setExpireDate(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 4));
+        refreshToken.setUser(user);
+
+        return refreshToken;
+    }
+
     @Override
     public AuthResponse authenticate(AuthRequest authRequest) {
         try {
@@ -40,9 +59,13 @@ public class AuthServiceImpl implements IAuthService {
             //girilen bilgiler doğruysa token oluşturma
 
             Optional<User> user = userRepository.findByUsername(authRequest.getUsername());
-            String token = jwtService.generateToken(user.get());
+            String accessToken = jwtService.generateToken(user.get());
 
-            return new AuthResponse(token);
+            //refresh token kaydetme işlemi
+            RefreshToken refreshToken = createRefreshToken(user.get());
+            refreshTokenRepository.save(refreshToken);
+
+            return new AuthResponse(accessToken, refreshToken.getRefreshToken());
         } catch (Exception e) {
             System.out.println("Kullanıcı adı veya şifre hatalı");
         }
