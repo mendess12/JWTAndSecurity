@@ -29,11 +29,18 @@ public class SecurityConfig {
     @Autowired
     private AuthEntryPoint authEntryPoint;
 
+    public static final String[] SWAGGER_PATHS = {
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/swagger-ui.html",
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf().disable()
                 .authorizeHttpRequests(request -> request.requestMatchers(AUTHENTICATE, REGISTER, REFRESH_TOKEN)
                         .permitAll()
+                        .requestMatchers(SWAGGER_PATHS).permitAll()
                         .anyRequest()
                         .authenticated())
                 .exceptionHandling().authenticationEntryPoint(authEntryPoint).and()
